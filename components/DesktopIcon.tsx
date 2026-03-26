@@ -24,8 +24,9 @@ export default function DesktopIcon({
 }: DesktopIconProps) {
   const [selected, setSelected] = useState(false);
   const clickRef = useRef<HTMLDivElement>(null);
-  const { dragProps } = useDraggable({
+  const { containerStyle, handleProps } = useDraggable({
     defaultPosition: offset ?? { x: 0, y: 0 },
+    allowClicks: true,
   });
 
   useClickOutside(clickRef, () => setSelected(false));
@@ -40,10 +41,11 @@ export default function DesktopIcon({
   }
 
   return (
-    <div {...dragProps}>
+    <div style={containerStyle}>
       <div
         ref={clickRef}
-        className={`text-[0.55rem] w-20 flex flex-col items-center my-[10px] text-center cursor-pointer ${
+        {...handleProps}
+        className={`text-[0.55rem] w-20 flex flex-col items-center my-[10px] text-center cursor-pointer select-none ${
           darkText ? 'text-black' : 'text-white'
         }`}
         onClick={handleInteraction}

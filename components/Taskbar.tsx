@@ -127,20 +127,18 @@ export default function Taskbar() {
           className='mr-[7px] cursor-pointer'
           onClick={handleModemClick}
         />
-        <div className='relative'>
-          <Image
-            src={speakerIcon}
-            alt=''
-            height={24}
-            className='mr-[10px] cursor-pointer'
-            onClick={() => setIsSoundOpen((prev) => !prev)}
-          />
-          {isSoundOpen && (
-            <SoundControl onClose={() => setIsSoundOpen(false)} />
-          )}
-        </div>
+        <Image
+          src={speakerIcon}
+          alt=''
+          height={24}
+          className='mr-[10px] cursor-pointer'
+          onClick={() => setIsSoundOpen((prev) => !prev)}
+        />
         <div>{time}</div>
       </div>
+
+      {/* Sound Control — rendered at nav level for correct positioning */}
+      {isSoundOpen && <SoundControl onClose={() => setIsSoundOpen(false)} />}
 
       {/* Start Menu */}
       {isStartOpen && (

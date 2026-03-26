@@ -1,14 +1,17 @@
 'use client';
 
-import { useRef, useState, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import Image from 'next/image';
 import { useWindowManager } from '@/contexts/WindowManagerContext';
+import { useFileSystem } from '@/contexts/FileSystemContext';
+import { useProgramData } from '@/contexts/ProgramDataContext';
 import { useResize } from '@/hooks/useResize';
-import { useClickOutside } from '@/hooks/useClickOutside';
 import { useSmallScreen } from '@/hooks/useSmallScreen';
 import { useDraggable } from '@/hooks/useDraggable';
 import type { ProgramConfig } from '@/types';
 import WindowMenuBar from './WindowMenuBar';
+import SaveAsDialog from './dialogs/SaveAsDialog';
+import SaveQuestionDialog from './dialogs/SaveQuestionDialog';
 
 import minimizeIcon from '@/public/icons/minimize.png';
 import maximizeIcon from '@/public/icons/maximize.png';
@@ -16,19 +19,10 @@ import closeIcon from '@/public/icons/close.png';
 
 interface WindowProps {
   config: ProgramConfig;
-  titleData?: string;
   children: React.ReactNode;
-  onClose?: () => void;
-  menuBarProps?: Record<string, unknown>;
 }
 
-export default function Window({
-  config,
-  titleData,
-  children,
-  onClose,
-  menuBarProps,
-}: WindowProps) {
+export default function Window({ config, children }: WindowProps) {
   const {
     getWindow,
     isActive,
@@ -39,17 +33,26 @@ export default function Window({
     toggleFullScreen,
     resetSize,
   } = useWindowManager();
+  const fs = useFileSystem();
+  const pd = useProgramData();
 
   const win = getWindow(config.id);
   const active = isActive(config.id);
   const isSmall = useSmallScreen();
-  const clickRef = useRef<HTMLDivElement>(null);
-  const [isFocusLost, setIsFocusLost] = useState(false);
+  const data = pd.getData(config.id);
+
+  // Dialog state
+  const [showSaveAs, setShowSaveAs] = useState(false);
+  const [showOpen, setShowOpen] = useState(false);
+  const [showSaveQuestion, setShowSaveQuestion] = useState(false);
+  const [pendingAction, setPendingAction] = useState<'close' | 'new' | null>(
+    null,
+  );
 
   const isFullScreen = win?.isFullScreen ?? false;
 
-  const { dragProps } = useDraggable({
-    disabled: false,
+  const { containerStyle, handleProps } = useDraggable({
+    disabled: isFullScreen,
     lockedPosition: isFullScreen ? { x: 0, y: 0 } : null,
   });
 
@@ -65,32 +68,114 @@ export default function Window({
     handleResize,
   );
 
-  useClickOutside(clickRef, () => setIsFocusLost(true));
-
   if (!win || !win.isOpen || win.isMinimized) return null;
 
   const currentSize = isSmall ? config.smallSize : win.size;
 
   const displayTitle = config.titled
-    ? `${titleData || 'Untitled'} - ${config.title}`
+    ? `${data.fileTitle || 'Untitled'} - ${config.title}`
     : config.title;
 
-  function handleClose() {
-    onClose?.();
+  // ── Close logic ──────────────────────────────────────────────
+  function doClose() {
+    pd.resetData(config.id);
     close(config.id);
     resetSize(config.id, isSmall ? config.smallSize : config.initialSize);
   }
 
+  function handleClose() {
+    if (config.saveable && !data.isSaved) {
+      setPendingAction('close');
+      setShowSaveQuestion(true);
+    } else {
+      doClose();
+    }
+  }
+
+  // ── Menu bar callbacks ────────────────────────────────────────
+  function handleNew() {
+    if (config.saveable && !data.isSaved) {
+      setPendingAction('new');
+      setShowSaveQuestion(true);
+    } else {
+      pd.resetData(config.id);
+    }
+  }
+
+  function handleSave() {
+    if (data.fileTitle && data.fileId) {
+      fs.overwriteFile(data.fileId, data.text);
+      pd.setIsSaved(config.id, true);
+    } else {
+      setShowSaveAs(true);
+    }
+  }
+
+  function handleOpenMenu() {
+    setShowOpen(true);
+  }
+
+  function handleOpenFile(fileId: string) {
+    const file = fs.getFile(fileId);
+    if (file) {
+      pd.loadFile(config.id, file.data, file.name + file.type, file.id);
+    }
+  }
+
+  function handleDelete() {
+    if (data.fileId) {
+      fs.deleteFile(data.fileId);
+      pd.resetData(config.id);
+    }
+  }
+
+  function handleEmptyBin() {
+    fs.emptyBin();
+  }
+
+  function handleRestore() {
+    fs.restoreAll();
+  }
+
+  function handleHelp() {}
+
+  // ── Save question callbacks ───────────────────────────────────
+  function onSaveQuestionYes() {
+    setShowSaveQuestion(false);
+    if (data.fileTitle && data.fileId) {
+      fs.overwriteFile(data.fileId, data.text);
+      pd.setIsSaved(config.id, true);
+      if (pendingAction === 'close') doClose();
+      if (pendingAction === 'new') pd.resetData(config.id);
+    } else {
+      setShowSaveAs(true);
+    }
+    setPendingAction(null);
+  }
+
+  function onSaveQuestionNo() {
+    setShowSaveQuestion(false);
+    if (pendingAction === 'close') doClose();
+    if (pendingAction === 'new') pd.resetData(config.id);
+    setPendingAction(null);
+  }
+
+  function onSaveQuestionCancel() {
+    setShowSaveQuestion(false);
+    setPendingAction(null);
+  }
+
   function handleFocus() {
-    setIsFocusLost(false);
     focus(config.id);
   }
 
+  const programType: 'notepad' | 'paint' =
+    config.id === 'paint' ? 'paint' : 'notepad';
+
   return (
-    <div {...dragProps}>
+    <>
       <div
-        ref={clickRef}
-        onClick={handleFocus}
+        onMouseDown={handleFocus}
         className={
           isFullScreen
             ? 'absolute top-0 left-0 w-[calc(100vw-1px)] h-[calc(100vh-45px)] bg-[#bdbdbd]'
@@ -105,12 +190,14 @@ export default function Window({
                 width: isSmall ? config.smallSize.w : currentSize.w,
                 height: isSmall ? config.smallSize.h : currentSize.h,
                 zIndex: win.zIndex,
+                ...containerStyle,
               }
         }
       >
-        {/* ── Title Bar ──────────────────────────────────────────── */}
+        {/* ── Title Bar (drag handle) ─────────────────────────────── */}
         <div
-          className={`win-titlebar ${isFocusLost ? 'win-titlebar-inactive' : ''}`}
+          {...handleProps}
+          className={`win-titlebar ${!active ? 'win-titlebar-inactive' : ''}`}
         >
           <div className='flex items-center gap-1 overflow-hidden'>
             <Image src={config.icon} alt='' height={20} className='shrink-0' />
@@ -121,7 +208,7 @@ export default function Window({
               {displayTitle}
             </span>
           </div>
-          <div className='flex items-center gap-0.5 shrink-0'>
+          <div className='flex items-center gap-0.5 shrink-0' data-no-drag>
             <div className='flex'>
               <Image
                 alt='minimize'
@@ -165,7 +252,13 @@ export default function Window({
             windowId={config.id}
             config={config}
             onClose={handleClose}
-            {...menuBarProps}
+            onNew={handleNew}
+            onSave={handleSave}
+            onOpen={handleOpenMenu}
+            onDelete={handleDelete}
+            onEmptyBin={handleEmptyBin}
+            onRestore={handleRestore}
+            onHelp={handleHelp}
           />
         )}
 
@@ -217,6 +310,41 @@ export default function Window({
           </div>
         )}
       </div>
-    </div>
+
+      {/* ── Dialogs ──────────────────────────────────────────────── */}
+      {showSaveAs && (
+        <SaveAsDialog
+          windowId={config.id}
+          programType={programType}
+          isSaveMode={true}
+          onClose={() => setShowSaveAs(false)}
+          onSaveComplete={() => {
+            if (pendingAction === 'close') doClose();
+            if (pendingAction === 'new') pd.resetData(config.id);
+            setPendingAction(null);
+          }}
+        />
+      )}
+
+      {showOpen && (
+        <SaveAsDialog
+          windowId={config.id}
+          programType={programType}
+          isSaveMode={false}
+          onClose={() => setShowOpen(false)}
+          onOpenFile={handleOpenFile}
+        />
+      )}
+
+      {showSaveQuestion && (
+        <SaveQuestionDialog
+          title={config.title}
+          fileTitle={data.fileTitle}
+          onYes={onSaveQuestionYes}
+          onNo={onSaveQuestionNo}
+          onCancel={onSaveQuestionCancel}
+        />
+      )}
+    </>
   );
 }

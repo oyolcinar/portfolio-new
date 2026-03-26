@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { WindowManagerProvider } from '@/contexts/WindowManagerContext';
 import { FileSystemProvider } from '@/contexts/FileSystemContext';
+import { ProgramDataProvider } from '@/contexts/ProgramDataContext';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -15,10 +16,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html lang='en'>
       <body>
         <WindowManagerProvider>
-          <FileSystemProvider>{children}</FileSystemProvider>
+          <FileSystemProvider>
+            <ProgramDataProvider>{children}</ProgramDataProvider>
+          </FileSystemProvider>
         </WindowManagerProvider>
       </body>
     </html>

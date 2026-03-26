@@ -28,13 +28,11 @@ interface StartMenuProps {
 
 export default function StartMenu({ onClose, startBtnRef }: StartMenuProps) {
   const [showPrograms, setShowPrograms] = useState(false);
-  const [showShutdown, setShowShutdown] = useState(false);
   const startRef = useRef<HTMLDivElement>(null);
   const { open } = useWindowManager();
 
   // Close on click outside (but not on start button itself)
   useClickOutside(startRef, () => {
-    // Small delay to avoid toggling the start button
     setTimeout(onClose, 0);
   });
 
@@ -56,12 +54,12 @@ export default function StartMenu({ onClose, startBtnRef }: StartMenuProps) {
   ];
 
   const itemClass =
-    'text-[0.6rem] h-10 w-[250px] flex items-center mb-[5px] cursor-pointer hover:text-white hover:bg-[#000181]';
+    'text-[0.6rem] h-10 w-[250px] flex items-center mb-[5px] cursor-pointer text-black hover:text-white hover:bg-[#000181]';
 
   return (
     <div
       ref={startRef}
-      className="absolute bottom-[38px] left-[6px] bg-[#c0c0c0] z-10 flex"
+      className='absolute bottom-[38px] left-[6px] bg-[#c0c0c0] z-10 flex'
       style={{
         border: '2px solid #393939',
         borderTopColor: 'white',
@@ -71,11 +69,11 @@ export default function StartMenu({ onClose, startBtnRef }: StartMenuProps) {
     >
       {/* Vertical banner */}
       <div
-        className="w-[35px] my-[2px]"
+        className='w-[35px] my-[2px]'
         style={{ backgroundImage: 'linear-gradient(black, #000181)' }}
       >
         <div
-          className="absolute text-white text-[0.64rem] w-[250px] h-5"
+          className='absolute text-white text-[0.64rem] w-[250px] h-5'
           style={{
             transform: 'rotate(270deg)',
             left: '-109px',
@@ -87,39 +85,42 @@ export default function StartMenu({ onClose, startBtnRef }: StartMenuProps) {
       </div>
 
       {/* Menu items */}
-      <ul className="list-none pl-0 my-[2px]">
+      <ul className='list-none pl-0 my-[2px]'>
         {/* Programs */}
         <li
-          className={`${itemClass} justify-between`}
+          className={`${itemClass} justify-between relative`}
           onMouseEnter={() => setShowPrograms(true)}
           onMouseLeave={() => setShowPrograms(false)}
         >
-          <div className="flex items-center gap-[7px] ml-[5px]">
-            <Image src={programsIcon} alt="" height={38} className="-ml-1" />
+          <div className='flex items-center gap-[7px] ml-[5px]'>
+            <Image src={programsIcon} alt='' height={38} className='-ml-1' />
             <div>Programs</div>
           </div>
-          <RiArrowRightSFill className="text-xl" />
+          <RiArrowRightSFill className='text-xl' />
 
-          {/* Programs sub-menu */}
+          {/* Programs sub-menu — anchored to this <li> */}
           {showPrograms && (
             <div
-              className="absolute left-full bottom-[calc(100%-40px)] bg-[#c0c0c0]"
+              className='absolute bg-[#c0c0c0]'
               style={{
+                left: '100%',
+                bottom: 0,
                 border: '2px solid #393939',
                 borderTopColor: 'white',
                 borderLeftColor: 'white',
                 boxShadow: '3px 0 4px -2px #393939',
               }}
+              onMouseEnter={() => setShowPrograms(true)}
             >
-              <ul className="list-none pl-0 my-[2px]">
+              <ul className='list-none pl-0 my-[2px]'>
                 {programItems.map((item) => (
                   <li
                     key={item.id}
                     className={itemClass}
                     onClick={() => openProgram(item.id)}
                   >
-                    <div className="flex items-center gap-[10px] ml-[5px]">
-                      <Image src={item.icon} alt="" height={30} />
+                    <div className='flex items-center gap-[10px] ml-[5px]'>
+                      <Image src={item.icon} alt='' height={30} />
                       <div>{item.label}</div>
                     </div>
                   </li>
@@ -131,29 +132,26 @@ export default function StartMenu({ onClose, startBtnRef }: StartMenuProps) {
 
         {/* Documents */}
         <li className={`${itemClass} justify-between`}>
-          <div className="flex items-center gap-[10px] ml-[5px]">
-            <Image src={documentsIcon} alt="" height={30} />
+          <div className='flex items-center gap-[10px] ml-[5px]'>
+            <Image src={documentsIcon} alt='' height={30} />
             <div>Documents</div>
           </div>
-          <RiArrowRightSFill className="text-xl" />
+          <RiArrowRightSFill className='text-xl' />
         </li>
 
         {/* Help */}
-        <li
-          className={itemClass}
-          onClick={() => openProgram('help')}
-        >
-          <Image src={helpIcon} alt="" height={30} className="ml-[5px]" />
-          <div className="ml-[10px]">Help</div>
+        <li className={itemClass} onClick={() => openProgram('help')}>
+          <Image src={helpIcon} alt='' height={30} className='ml-[5px]' />
+          <div className='ml-[10px]'>Help</div>
         </li>
 
         {/* Separator */}
-        <li className="win-separator mx-[5px]" />
+        <li className='win-separator mx-[5px]' />
 
         {/* Login */}
         <li className={itemClass}>
-          <Image src={keyIcon} alt="" height={45} className="ml-[5px]" />
-          <span className="ml-[5px]">Login...</span>
+          <Image src={keyIcon} alt='' height={45} className='ml-[5px]' />
+          <span className='ml-[5px]'>Login...</span>
         </li>
 
         {/* Shutdown */}
@@ -164,8 +162,8 @@ export default function StartMenu({ onClose, startBtnRef }: StartMenuProps) {
             open('shutdown', { w: 400, h: 300 });
           }}
         >
-          <Image src={shutdownIcon} alt="" height={45} className="ml-[5px]" />
-          <span className="ml-[5px]">Turn Off Computer...</span>
+          <Image src={shutdownIcon} alt='' height={45} className='ml-[5px]' />
+          <span className='ml-[5px]'>Turn Off Computer...</span>
         </li>
       </ul>
     </div>

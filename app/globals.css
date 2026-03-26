@@ -240,3 +240,142 @@ a {
   background-position: center 4px;
   background-image: url('/icons/rightArrow.png');
 }
+
+/* ── Sound Control ─────────────────────────────────────────────── */
+
+.sound-control-container {
+  position: absolute;
+  width: 100px;
+  height: 180px;
+  background-color: #c0c0c0;
+  border: 2px solid #08080e;
+  border-top-color: white;
+  border-left-color: white;
+  z-index: 99;
+  bottom: 38px;
+  right: 80px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.sound-control-header {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 0.5rem;
+}
+
+.sound-control-body {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-start;
+  align-items: center;
+}
+
+.sound-control-triangle {
+  width: 25px;
+  height: 100px;
+  clip-path: polygon(30% 0%, 100% 0%, 100% 100%);
+  background-color: #d2d2d2;
+  border: 1px solid #08080e;
+  border-top-color: white;
+}
+
+/* Wrapper holds the rotated slider in a 100px tall column */
+.sound-control-slider-wrap {
+  width: 40px;
+  height: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 5px;
+}
+
+.sound-control-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100px;
+  height: 2px;
+  outline: none;
+  background: #08080e;
+  border: 1px solid #08080e;
+  border-right-color: #a0a0a0;
+  transform: rotate(-90deg);
+  transform-origin: center center;
+}
+
+.sound-control-slider:focus {
+  outline: 1px dashed #08080e;
+  outline-offset: 14px;
+}
+
+.sound-control-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 15px;
+  height: 30px;
+  background: #c0c0c0;
+  border: 2px solid #08080e;
+  border-top-color: white;
+  border-left-color: white;
+}
+
+.sound-control-slider::-moz-range-thumb {
+  width: 15px;
+  height: 30px;
+  background: #c0c0c0;
+  border: 2px solid #08080e;
+  border-top-color: white;
+  border-left-color: white;
+}
+
+/* ── Sound Control Mute Checkbox ──────────────────────────────── */
+
+.sound-control-mute-label {
+  position: relative;
+  padding-left: 31px;
+  padding-bottom: 10px;
+  font-size: 0.5rem;
+  cursor: pointer;
+}
+
+.sound-control-mute-input {
+  -webkit-appearance: none;
+  appearance: none;
+  background-color: white;
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.sound-control-checkmark {
+  position: absolute;
+  bottom: 10px;
+  left: 11px;
+  height: 15px;
+  width: 15px;
+  background-color: white;
+  border: 2px inset #08080e;
+  border-bottom-color: white;
+  border-right-color: white;
+}
+
+.sound-control-checkmark::after {
+  content: '';
+  position: absolute;
+  display: none;
+  left: 3px;
+  top: -1px;
+  width: 3px;
+  height: 8px;
+  border: solid #000;
+  border-width: 0 3px 3px 0;
+  transform: rotate(45deg);
+}
+
+.sound-control-mute-input:checked ~ .sound-control-checkmark::after {
+  display: block;
+}

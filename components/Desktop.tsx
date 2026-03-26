@@ -2,7 +2,9 @@
 
 import { useWindowManager } from '@/contexts/WindowManagerContext';
 import { useFileSystem } from '@/contexts/FileSystemContext';
+import { useProgramData } from '@/contexts/ProgramDataContext';
 import { PROGRAMS, getProgramConfig } from '@/config/programs';
+import { aboutText } from '@/config/aboutText';
 
 import DesktopIcon from './DesktopIcon';
 import Window from './Window';
@@ -22,10 +24,19 @@ import directoryImg from '@/public/icons/directory.png';
 export default function Desktop() {
   const wm = useWindowManager();
   const fs = useFileSystem();
+  const pd = useProgramData();
 
   function openProgram(id: string) {
     const config = getProgramConfig(id);
     if (config) wm.open(config.id, config.initialSize);
+  }
+
+  function openAbout() {
+    const config = getProgramConfig('notepad');
+    if (config) {
+      wm.open('notepad', config.initialSize);
+      pd.loadFile('notepad', aboutText, 'About.txt', 'aboutDesktop');
+    }
   }
 
   const desktopIcons = [
@@ -57,7 +68,7 @@ export default function Desktop() {
       id: 'about-icon',
       name: 'About.txt',
       icon: notepadFile,
-      action: () => openProgram('notepad'),
+      action: openAbout,
     },
     {
       id: 'works-icon',
@@ -73,7 +84,7 @@ export default function Desktop() {
   );
 
   return (
-    <div className='h-[calc(100vh-45px)] w-screen relative'>
+    <div className='h-screen w-screen relative'>
       {/* Desktop Icons */}
       {desktopIcons.map((item) => (
         <DesktopIcon
@@ -92,7 +103,18 @@ export default function Desktop() {
           name={`${file.name}${file.type}`}
           icon={notepadFile}
           shortcutOverlay={shortcutIcon}
-          onDoubleClick={() => openProgram(file.program)}
+          onDoubleClick={() => {
+            const config = getProgramConfig(file.program);
+            if (config) {
+              wm.open(file.program, config.initialSize);
+              pd.loadFile(
+                file.program,
+                file.data,
+                file.name + file.type,
+                file.id,
+              );
+            }
+          }}
         />
       ))}
 
